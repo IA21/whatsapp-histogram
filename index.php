@@ -495,7 +495,7 @@
                                             day: 'numeric' 
                                         });
                                     }
-                                    return label; // For weekly, show as is (W01, W02, etc.)
+                                    return label; // For weekly (now monthly), show month names directly
                                 }
                             }
                         }
@@ -510,6 +510,8 @@
                             callbacks: {
                                 title: function(context) {
                                     const label = context[0].label;
+                                    const index = context[0].dataIndex;
+                                    
                                     if (groupBy === 'day') {
                                         const date = new Date(label);
                                         return date.toLocaleDateString('en-US', { 
@@ -519,7 +521,24 @@
                                             day: 'numeric' 
                                         });
                                     } else {
-                                        return `Week ${label.substring(1)} of ${yearData.year}`;
+                                        // For weekly grouping, show the week date range if available
+                                        if (yearData.weekDetails && yearData.weekDetails[index]) {
+                                            const weekDetail = yearData.weekDetails[index];
+                                            if (weekDetail.startDate && weekDetail.endDate) {
+                                                const startDate = new Date(weekDetail.startDate);
+                                                const endDate = new Date(weekDetail.endDate);
+                                                const startFormatted = startDate.toLocaleDateString('en-US', { 
+                                                    month: 'short', day: 'numeric' 
+                                                });
+                                                const endFormatted = endDate.toLocaleDateString('en-US', { 
+                                                    month: 'short', day: 'numeric' 
+                                                });
+                                                return `Week ${weekDetail.weekNumber} of ${yearData.year} (${startFormatted} - ${endFormatted})`;
+                                            } else {
+                                                return `Week ${weekDetail.weekNumber} of ${yearData.year} (${weekDetail.monthName})`;
+                                            }
+                                        }
+                                        return `${label} ${yearData.year}`;
                                     }
                                 }
                             }

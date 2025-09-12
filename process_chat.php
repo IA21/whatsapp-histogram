@@ -145,8 +145,9 @@ foreach ($yearlyData as $year => $yearMessages) {
         $yearData['data'] = $fullYearData;
         
     } elseif ($groupBy === 'week') {
-        // Group by weeks within the year
+        // Group by weeks within the year (52 data points with month context)
         $weeklyData = [];
+        $weekDetails = [];
         
         foreach ($yearMessages as $date => $count) {
             $timestamp = strtotime($date);
@@ -158,23 +159,56 @@ foreach ($yearlyData as $year => $yearMessages) {
             
             if (isset($weeklyData[$weekKey])) {
                 $weeklyData[$weekKey] += $count;
+                $weekDetails[$weekKey]['endDate'] = $date;
             } else {
                 $weeklyData[$weekKey] = $count;
+                $weekDetails[$weekKey] = [
+                    'startDate' => $date,
+                    'endDate' => $date
+                ];
             }
         }
         
-        // Create full year of weeks (52-53 weeks)
+        // Create full year of weeks (52-53 weeks) with month-aware labels
         $fullWeeklyData = [];
         $fullWeeklyLabels = [];
+        $fullWeekDetails = [];
         
         for ($week = 1; $week <= 53; $week++) {
             $weekKey = 'W' . sprintf('%02d', $week);
-            $fullWeeklyLabels[] = $weekKey;
+            
+            // Calculate what month this week primarily falls in
+            $weekStartDay = ($week - 1) * 7 + 1;
+            $weekDate = mktime(0, 0, 0, 1, $weekStartDay, $year);
+            $monthName = date('M', $weekDate);
+            
+            // Create month-aware label (e.g., "Jan W1", "Feb W2")
+            $weekInYear = $week;
+            $label = $monthName . ' W' . sprintf('%02d', $weekInYear);
+            
+            $fullWeeklyLabels[] = $label;
             $fullWeeklyData[] = $weeklyData[$weekKey] ?? 0;
+            
+            if (isset($weekDetails[$weekKey])) {
+                $fullWeekDetails[] = [
+                    'weekNumber' => $week,
+                    'monthName' => $monthName,
+                    'startDate' => $weekDetails[$weekKey]['startDate'],
+                    'endDate' => $weekDetails[$weekKey]['endDate']
+                ];
+            } else {
+                $fullWeekDetails[] = [
+                    'weekNumber' => $week,
+                    'monthName' => $monthName,
+                    'startDate' => null,
+                    'endDate' => null
+                ];
+            }
         }
         
         $yearData['labels'] = $fullWeeklyLabels;
         $yearData['data'] = $fullWeeklyData;
+        $yearData['weekDetails'] = $fullWeekDetails;
     }
     
     $response['years'][] = $yearData;
