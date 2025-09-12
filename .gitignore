@@ -1,1 +1,2 @@
-chats/
+chats/*
+!chats/.gitkeep
