@@ -454,8 +454,22 @@
         function createChart(canvas, yearData, chartType, yAxisMax, groupBy) {
             const ctx = canvas.getContext('2d');
             
+            const currentYear = new Date().getFullYear();
+            const isCurrentYear = parseInt(yearData.year) === currentYear;
+            const detailsKey = groupBy === 'week' ? 'weekDetails' : null;
+            
             // For daily view, show fewer labels on X-axis
             const maxLabels = groupBy === 'day' ? 12 : 26; // Show ~12 months for daily, ~26 weeks for weekly
+            
+            // For current year line charts, hide dots on zero values
+            let pointRadius = 3;
+            let pointRadiusArray = null;
+            
+            if (chartType === 'line' && isCurrentYear) {
+                // Create array of point radii - 0 for zero values, 3 for non-zero values
+                pointRadiusArray = yearData.data.map(value => value === 0 ? 0 : 3);
+                pointRadius = pointRadiusArray;
+            }
             
             const config = {
                 type: chartType,
@@ -468,7 +482,10 @@
                         borderColor: '#25D366',
                         borderWidth: 2,
                         fill: chartType === 'line',
-                        tension: 0.4
+                        tension: 0.4,
+                        pointRadius: pointRadius,
+                        pointHoverRadius: chartType === 'line' && isCurrentYear ? 
+                            yearData.data.map(value => value === 0 ? 0 : 5) : 5
                     }]
                 },
                 options: {
@@ -522,8 +539,8 @@
                                         });
                                     } else {
                                         // For weekly grouping, show the week date range if available
-                                        if (yearData.weekDetails && yearData.weekDetails[index]) {
-                                            const weekDetail = yearData.weekDetails[index];
+                                        if (yearData[detailsKey] && yearData[detailsKey][index]) {
+                                            const weekDetail = yearData[detailsKey][index];
                                             if (weekDetail.startDate && weekDetail.endDate) {
                                                 const startDate = new Date(weekDetail.startDate);
                                                 const endDate = new Date(weekDetail.endDate);
