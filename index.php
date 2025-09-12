@@ -85,49 +85,12 @@
             box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.1);
         }
         
-        #chart-container {
-            background: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            min-height: 400px;
-            position: relative;
-        }
-        
-        #myChart {
-            max-height: 400px;
-        }
-        
-        #loader {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-        }
-        
-        .loader-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #25D366;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 2s linear infinite;
-            margin: 0 auto 10px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .stats {
+        .overall-stats {
             display: flex;
             justify-content: center;
             gap: 30px;
             flex-wrap: wrap;
+            margin-bottom: 40px;
         }
         
         .stat-card {
@@ -150,6 +113,89 @@
             font-weight: 600;
         }
         
+        .charts-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .year-chart {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .year-chart h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #25D366;
+            font-size: 1.8em;
+        }
+        
+        .chart-canvas {
+            width: 100% !important;
+            height: 400px !important;
+            max-height: 400px;
+        }
+        
+        .year-stats {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .year-stat {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 100px;
+        }
+        
+        .year-stat .value {
+            font-weight: bold;
+            color: #25D366;
+            font-size: 1.2em;
+        }
+        
+        .year-stat .label {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        #loader {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            text-align: center;
+            z-index: 1000;
+        }
+        
+        .loader-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #25D366;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         .error {
             background: #ff4444;
             color: white;
@@ -157,6 +203,14 @@
             border-radius: 8px;
             margin-bottom: 20px;
             text-align: center;
+            display: none;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+            font-size: 1.2em;
             display: none;
         }
     </style>
@@ -208,15 +262,12 @@
             </div>
         </div>
         
-        <div id="chart-container">
-            <div id="loader">
-                <div class="loader-spinner"></div>
-                <p>Processing chat data...</p>
-            </div>
-            <canvas id="myChart"></canvas>
+        <div id="loader">
+            <div class="loader-spinner"></div>
+            <p>Processing chat data...</p>
         </div>
         
-        <div class="stats" id="stats-container" style="display: none;">
+        <div class="overall-stats" id="overall-stats" style="display: none;">
             <div class="stat-card">
                 <h3 id="total-messages">-</h3>
                 <p>Total Messages</p>
@@ -226,29 +277,37 @@
                 <p>Date Range</p>
             </div>
             <div class="stat-card">
-                <h3 id="avg-daily">-</h3>
-                <p>Avg per Day</p>
+                <h3 id="years-count">-</h3>
+                <p>Years Analyzed</p>
             </div>
         </div>
+        
+        <div class="no-data" id="no-data">
+            <h3>No data to display</h3>
+            <p>Please select a chat file to analyze.</p>
+        </div>
+        
+        <div class="charts-container" id="charts-container"></div>
     </div>
 
     <script>
         // Global variables
-        let currentChart = null;
+        let currentCharts = [];
         
         // DOM elements
         const contactSelect = document.getElementById('contact-select');
         const chartTypeSelect = document.getElementById('chart-type-select');
         const groupBySelect = document.getElementById('group-by-select');
-        const chartContainer = document.getElementById('chart-container');
+        const chartsContainer = document.getElementById('charts-container');
         const loader = document.getElementById('loader');
         const errorMessage = document.getElementById('error-message');
-        const statsContainer = document.getElementById('stats-container');
+        const overallStats = document.getElementById('overall-stats');
+        const noData = document.getElementById('no-data');
         
         // Event listeners
-        contactSelect.addEventListener('change', fetchAndRenderChart);
-        chartTypeSelect.addEventListener('change', fetchAndRenderChart);
-        groupBySelect.addEventListener('change', fetchAndRenderChart);
+        contactSelect.addEventListener('change', fetchAndRenderCharts);
+        chartTypeSelect.addEventListener('change', fetchAndRenderCharts);
+        groupBySelect.addEventListener('change', fetchAndRenderCharts);
         
         // Load default chart on page load
         window.addEventListener('load', () => {
@@ -256,7 +315,7 @@
             const sampleOption = contactSelect.querySelector('option[value="sample.txt"]');
             if (sampleOption) {
                 contactSelect.value = 'sample.txt';
-                fetchAndRenderChart();
+                fetchAndRenderCharts();
             }
         });
         
@@ -268,43 +327,55 @@
             }, 5000);
         }
         
-        function updateStats(data) {
+        function updateOverallStats(data) {
             if (data.totalMessages) {
                 document.getElementById('total-messages').textContent = data.totalMessages.toLocaleString();
                 
-                if (data.labels && data.labels.length > 0) {
-                    const firstDate = data.labels[0];
-                    const lastDate = data.labels[data.labels.length - 1];
-                    document.getElementById('date-range').textContent = `${firstDate} to ${lastDate}`;
-                    
-                    // Calculate average daily messages
-                    const daysDiff = Math.ceil((new Date(lastDate) - new Date(firstDate)) / (1000 * 60 * 60 * 24)) + 1;
-                    const avgDaily = Math.round(data.totalMessages / daysDiff);
-                    document.getElementById('avg-daily').textContent = avgDaily.toLocaleString();
+                if (data.dateRange && data.dateRange.start && data.dateRange.end) {
+                    const startDate = new Date(data.dateRange.start).toLocaleDateString();
+                    const endDate = new Date(data.dateRange.end).toLocaleDateString();
+                    document.getElementById('date-range').textContent = `${startDate} - ${endDate}`;
                 }
                 
-                statsContainer.style.display = 'flex';
+                document.getElementById('years-count').textContent = data.years.length;
+                overallStats.style.display = 'flex';
             }
         }
         
-        function fetchAndRenderChart() {
+        function calculateYearStats(yearData, groupBy) {
+            const total = yearData.totalMessages;
+            const nonZeroData = yearData.data.filter(count => count > 0);
+            const avg = nonZeroData.length > 0 ? Math.round(total / nonZeroData.length) : 0;
+            const max = Math.max(...yearData.data);
+            
+            return {
+                total: total.toLocaleString(),
+                avg: `${avg}/${groupBy === 'day' ? 'day' : 'week'}`,
+                max: max.toLocaleString()
+            };
+        }
+        
+        function fetchAndRenderCharts() {
             const contactFile = contactSelect.value;
             const chartType = chartTypeSelect.value;
             const groupBy = groupBySelect.value;
             
             if (!contactFile) {
+                overallStats.style.display = 'none';
+                chartsContainer.innerHTML = '';
+                noData.style.display = 'block';
                 return;
             }
             
             // Show loader
             loader.style.display = 'block';
-            statsContainer.style.display = 'none';
+            overallStats.style.display = 'none';
+            noData.style.display = 'none';
             
-            // Clear existing chart
-            if (currentChart) {
-                currentChart.destroy();
-                currentChart = null;
-            }
+            // Clear existing charts
+            currentCharts.forEach(chart => chart.destroy());
+            currentCharts = [];
+            chartsContainer.innerHTML = '';
             
             // Create FormData for POST request
             const formData = new FormData();
@@ -328,8 +399,8 @@
                     throw new Error(data.error);
                 }
                 
-                renderChart(data, chartType);
-                updateStats(data);
+                renderYearlyCharts(data, chartType, groupBy);
+                updateOverallStats(data);
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -340,16 +411,59 @@
             });
         }
         
-        function renderChart(data, chartType) {
-            const ctx = document.getElementById('myChart').getContext('2d');
+        function renderYearlyCharts(data, chartType, groupBy) {
+            if (!data.years || data.years.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+            
+            data.years.forEach(yearData => {
+                const yearDiv = document.createElement('div');
+                yearDiv.className = 'year-chart';
+                
+                const yearStats = calculateYearStats(yearData, groupBy);
+                
+                yearDiv.innerHTML = `
+                    <h2>${yearData.year}</h2>
+                    <canvas class="chart-canvas"></canvas>
+                    <div class="year-stats">
+                        <div class="year-stat">
+                            <div class="value">${yearStats.total}</div>
+                            <div class="label">Total</div>
+                        </div>
+                        <div class="year-stat">
+                            <div class="value">${yearStats.avg}</div>
+                            <div class="label">Average</div>
+                        </div>
+                        <div class="year-stat">
+                            <div class="value">${yearStats.max}</div>
+                            <div class="label">Peak</div>
+                        </div>
+                    </div>
+                `;
+                
+                chartsContainer.appendChild(yearDiv);
+                
+                // Create chart for this year
+                const canvas = yearDiv.querySelector('canvas');
+                const chart = createChart(canvas, yearData, chartType, data.yAxisMax, groupBy);
+                currentCharts.push(chart);
+            });
+        }
+        
+        function createChart(canvas, yearData, chartType, yAxisMax, groupBy) {
+            const ctx = canvas.getContext('2d');
+            
+            // For daily view, show fewer labels on X-axis
+            const maxLabels = groupBy === 'day' ? 12 : 26; // Show ~12 months for daily, ~26 weeks for weekly
             
             const config = {
                 type: chartType,
                 data: {
-                    labels: data.labels,
+                    labels: yearData.labels,
                     datasets: [{
                         label: 'Messages',
-                        data: data.data,
+                        data: yearData.data,
                         backgroundColor: chartType === 'bar' ? 'rgba(37, 211, 102, 0.8)' : 'rgba(37, 211, 102, 0.1)',
                         borderColor: '#25D366',
                         borderWidth: 2,
@@ -363,13 +477,26 @@
                     scales: {
                         y: {
                             beginAtZero: true,
+                            max: yAxisMax,
                             ticks: {
-                                stepSize: 1
+                                stepSize: Math.ceil(yAxisMax / 10)
                             }
                         },
                         x: {
                             ticks: {
-                                maxTicksLimit: 20
+                                maxTicksLimit: maxLabels,
+                                callback: function(value, index, values) {
+                                    const label = this.getLabelForValue(value);
+                                    if (groupBy === 'day') {
+                                        // Show only month/day for daily view
+                                        const date = new Date(label);
+                                        return date.toLocaleDateString('en-US', { 
+                                            month: 'short', 
+                                            day: 'numeric' 
+                                        });
+                                    }
+                                    return label; // For weekly, show as is (W01, W02, etc.)
+                                }
                             }
                         }
                     },
@@ -380,6 +507,22 @@
                         tooltip: {
                             mode: 'index',
                             intersect: false,
+                            callbacks: {
+                                title: function(context) {
+                                    const label = context[0].label;
+                                    if (groupBy === 'day') {
+                                        const date = new Date(label);
+                                        return date.toLocaleDateString('en-US', { 
+                                            weekday: 'long',
+                                            year: 'numeric',
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        });
+                                    } else {
+                                        return `Week ${label.substring(1)} of ${yearData.year}`;
+                                    }
+                                }
+                            }
                         }
                     },
                     interaction: {
@@ -390,7 +533,7 @@
                 }
             };
             
-            currentChart = new Chart(ctx, config);
+            return new Chart(ctx, config);
         }
     </script>
 </body>

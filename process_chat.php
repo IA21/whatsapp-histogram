@@ -90,47 +90,108 @@ fclose($handle);
 // Sort dates chronologically
 ksort($dailyMessageCounts);
 
-// Prepare response data
-$response = [];
+// Group data by year
+$yearlyData = [];
 
-if ($groupBy === 'day') {
-    $response['labels'] = array_keys($dailyMessageCounts);
-    $response['data'] = array_values($dailyMessageCounts);
-} elseif ($groupBy === 'week') {
-    $weeklyMessageCounts = [];
+foreach ($dailyMessageCounts as $date => $count) {
+    $year = date('Y', strtotime($date));
     
-    foreach ($dailyMessageCounts as $date => $count) {
-        $timestamp = strtotime($date);
-        $year = date('Y', $timestamp);
-        
-        // Custom week calculation: Jan 1 = start of week 1
-        $jan1 = strtotime($year . '-01-01');
-        $daysDiff = floor(($timestamp - $jan1) / (60 * 60 * 24));
-        $weekNumber = floor($daysDiff / 7) + 1;
-        
-        $weekKey = $year . '-W' . sprintf('%02d', $weekNumber);
-        
-        if (isset($weeklyMessageCounts[$weekKey])) {
-            $weeklyMessageCounts[$weekKey] += $count;
-        } else {
-            $weeklyMessageCounts[$weekKey] = $count;
-        }
+    if (!isset($yearlyData[$year])) {
+        $yearlyData[$year] = [];
     }
     
-    ksort($weeklyMessageCounts);
-    $response['labels'] = array_keys($weeklyMessageCounts);
-    $response['data'] = array_values($weeklyMessageCounts);
+    $yearlyData[$year][$date] = $count;
 }
 
-// Add metadata
+// Prepare response data grouped by year
+$response = [
+    'years' => [],
+    'totalMessages' => array_sum($dailyMessageCounts),
+    'dateRange' => []
+];
+
 if (!empty($dailyMessageCounts)) {
-    $firstDate = array_keys($dailyMessageCounts)[0];
-    $response['year'] = date('Y', strtotime($firstDate));
-} else {
-    $response['year'] = date('Y');
+    $allDates = array_keys($dailyMessageCounts);
+    $response['dateRange'] = [
+        'start' => $allDates[0],
+        'end' => $allDates[count($allDates) - 1]
+    ];
 }
 
-$response['totalMessages'] = array_sum($dailyMessageCounts);
+foreach ($yearlyData as $year => $yearMessages) {
+    $yearData = [
+        'year' => $year,
+        'totalMessages' => array_sum($yearMessages)
+    ];
+    
+    if ($groupBy === 'day') {
+        // Create full year data with zeros for missing days
+        $yearStart = $year . '-01-01';
+        $yearEnd = $year . '-12-31';
+        $fullYearData = [];
+        $fullYearLabels = [];
+        
+        $currentDate = new DateTime($yearStart);
+        $endDate = new DateTime($yearEnd);
+        
+        while ($currentDate <= $endDate) {
+            $dateStr = $currentDate->format('Y-m-d');
+            $fullYearLabels[] = $dateStr;
+            $fullYearData[] = $yearMessages[$dateStr] ?? 0;
+            $currentDate->add(new DateInterval('P1D'));
+        }
+        
+        $yearData['labels'] = $fullYearLabels;
+        $yearData['data'] = $fullYearData;
+        
+    } elseif ($groupBy === 'week') {
+        // Group by weeks within the year
+        $weeklyData = [];
+        
+        foreach ($yearMessages as $date => $count) {
+            $timestamp = strtotime($date);
+            $jan1 = strtotime($year . '-01-01');
+            $daysDiff = floor(($timestamp - $jan1) / (60 * 60 * 24));
+            $weekNumber = floor($daysDiff / 7) + 1;
+            
+            $weekKey = 'W' . sprintf('%02d', $weekNumber);
+            
+            if (isset($weeklyData[$weekKey])) {
+                $weeklyData[$weekKey] += $count;
+            } else {
+                $weeklyData[$weekKey] = $count;
+            }
+        }
+        
+        // Create full year of weeks (52-53 weeks)
+        $fullWeeklyData = [];
+        $fullWeeklyLabels = [];
+        
+        for ($week = 1; $week <= 53; $week++) {
+            $weekKey = 'W' . sprintf('%02d', $week);
+            $fullWeeklyLabels[] = $weekKey;
+            $fullWeeklyData[] = $weeklyData[$weekKey] ?? 0;
+        }
+        
+        $yearData['labels'] = $fullWeeklyLabels;
+        $yearData['data'] = $fullWeeklyData;
+    }
+    
+    $response['years'][] = $yearData;
+}
+
+// Sort years chronologically
+usort($response['years'], function($a, $b) {
+    return (int)$a['year'] - (int)$b['year'];
+});
+
+// Calculate Y-axis max from all processed data
+$allProcessedValues = [];
+foreach ($response['years'] as $year) {
+    $allProcessedValues = array_merge($allProcessedValues, $year['data']);
+}
+$maxValue = empty($allProcessedValues) ? 10 : max($allProcessedValues);
+$response['yAxisMax'] = ceil($maxValue * 1.1); // Add 10% padding
 
 echo json_encode($response);
 ?>
