@@ -258,6 +258,7 @@
                 <select id="group-by-select">
                     <option value="day">Daily</option>
                     <option value="week">Weekly</option>
+                    <option value="month">Monthly</option>
                 </select>
             </div>
         </div>
@@ -456,10 +457,10 @@
             
             const currentYear = new Date().getFullYear();
             const isCurrentYear = parseInt(yearData.year) === currentYear;
-            const detailsKey = groupBy === 'week' ? 'weekDetails' : null;
+            const detailsKey = groupBy === 'week' ? 'weekDetails' : (groupBy === 'month' ? 'monthDetails' : null);
             
-            // For daily view, show fewer labels on X-axis
-            const maxLabels = groupBy === 'day' ? 12 : 26; // Show ~12 months for daily, ~26 weeks for weekly
+            // Set max labels based on grouping type
+            const maxLabels = groupBy === 'day' ? 12 : (groupBy === 'month' ? 12 : 26); // 12 for daily/monthly, 26 for weekly
             
             // For current year line charts, hide dots on zero values
             let pointRadius = 3;
@@ -538,21 +539,38 @@
                                             day: 'numeric' 
                                         });
                                     } else {
-                                        // For weekly grouping, show the week date range if available
+                                        // For weekly/monthly grouping, show the date range if available
                                         if (yearData[detailsKey] && yearData[detailsKey][index]) {
-                                            const weekDetail = yearData[detailsKey][index];
-                                            if (weekDetail.startDate && weekDetail.endDate) {
-                                                const startDate = new Date(weekDetail.startDate);
-                                                const endDate = new Date(weekDetail.endDate);
-                                                const startFormatted = startDate.toLocaleDateString('en-US', { 
-                                                    month: 'short', day: 'numeric' 
-                                                });
-                                                const endFormatted = endDate.toLocaleDateString('en-US', { 
-                                                    month: 'short', day: 'numeric' 
-                                                });
-                                                return `Week ${weekDetail.weekNumber} of ${yearData.year} (${startFormatted} - ${endFormatted})`;
-                                            } else {
-                                                return `Week ${weekDetail.weekNumber} of ${yearData.year} (${weekDetail.monthName})`;
+                                            const detail = yearData[detailsKey][index];
+                                            
+                                            if (groupBy === 'week') {
+                                                if (detail.startDate && detail.endDate) {
+                                                    const startDate = new Date(detail.startDate);
+                                                    const endDate = new Date(detail.endDate);
+                                                    const startFormatted = startDate.toLocaleDateString('en-US', { 
+                                                        month: 'short', day: 'numeric' 
+                                                    });
+                                                    const endFormatted = endDate.toLocaleDateString('en-US', { 
+                                                        month: 'short', day: 'numeric' 
+                                                    });
+                                                    return `Week ${detail.weekNumber} of ${yearData.year} (${startFormatted} - ${endFormatted})`;
+                                                } else {
+                                                    return `Week ${detail.weekNumber} of ${yearData.year} (${detail.monthName})`;
+                                                }
+                                            } else if (groupBy === 'month') {
+                                                if (detail.startDate && detail.endDate) {
+                                                    const startDate = new Date(detail.startDate);
+                                                    const endDate = new Date(detail.endDate);
+                                                    const startFormatted = startDate.toLocaleDateString('en-US', { 
+                                                        month: 'short', day: 'numeric' 
+                                                    });
+                                                    const endFormatted = endDate.toLocaleDateString('en-US', { 
+                                                        month: 'short', day: 'numeric' 
+                                                    });
+                                                    return `${detail.monthName} ${yearData.year} (${startFormatted} - ${endFormatted})`;
+                                                } else {
+                                                    return `${detail.monthName} ${yearData.year}`;
+                                                }
                                             }
                                         }
                                         return `${label} ${yearData.year}`;

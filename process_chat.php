@@ -209,6 +209,62 @@ foreach ($yearlyData as $year => $yearMessages) {
         $yearData['labels'] = $fullWeeklyLabels;
         $yearData['data'] = $fullWeeklyData;
         $yearData['weekDetails'] = $fullWeekDetails;
+        
+    } elseif ($groupBy === 'month') {
+        // Group by months within the year (12 data points)
+        $monthlyData = [];
+        $monthDetails = [];
+        
+        foreach ($yearMessages as $date => $count) {
+            $timestamp = strtotime($date);
+            $monthKey = date('Y-m', $timestamp);
+            $monthName = date('M', $timestamp);
+            
+            if (isset($monthlyData[$monthKey])) {
+                $monthlyData[$monthKey] += $count;
+                $monthDetails[$monthKey]['endDate'] = $date;
+            } else {
+                $monthlyData[$monthKey] = $count;
+                $monthDetails[$monthKey] = [
+                    'name' => $monthName,
+                    'startDate' => $date,
+                    'endDate' => $date
+                ];
+            }
+        }
+        
+        // Create full year of months (Jan-Dec)
+        $fullMonthlyData = [];
+        $fullMonthlyLabels = [];
+        $fullMonthDetails = [];
+        
+        for ($month = 1; $month <= 12; $month++) {
+            $monthKey = $year . '-' . sprintf('%02d', $month);
+            $monthName = date('M', mktime(0, 0, 0, $month, 1, $year));
+            
+            $fullMonthlyLabels[] = $monthName;
+            $fullMonthlyData[] = $monthlyData[$monthKey] ?? 0;
+            
+            if (isset($monthDetails[$monthKey])) {
+                $fullMonthDetails[] = [
+                    'monthNumber' => $month,
+                    'monthName' => $monthName,
+                    'startDate' => $monthDetails[$monthKey]['startDate'],
+                    'endDate' => $monthDetails[$monthKey]['endDate']
+                ];
+            } else {
+                $fullMonthDetails[] = [
+                    'monthNumber' => $month,
+                    'monthName' => $monthName,
+                    'startDate' => null,
+                    'endDate' => null
+                ];
+            }
+        }
+        
+        $yearData['labels'] = $fullMonthlyLabels;
+        $yearData['data'] = $fullMonthlyData;
+        $yearData['monthDetails'] = $fullMonthDetails;
     }
     
     $response['years'][] = $yearData;
