@@ -359,6 +359,100 @@
             font-size: 0.9em;
             margin-right: 8px;
         }
+        
+        /* Dark mode styles */
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --container-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --card-bg: #3a3a3a;
+            --border-color: #555;
+            --input-bg: #404040;
+            --modal-bg: #2d2d2d;
+            --grid-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        [data-theme="light"] {
+            --bg-color: #f5f5f5;
+            --container-bg: transparent;
+            --text-color: #333;
+            --card-bg: white;
+            --border-color: #ddd;
+            --input-bg: white;
+            --modal-bg: white;
+            --grid-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .container {
+            background-color: var(--container-bg);
+        }
+        
+        .stat-card, .year-chart {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+        
+        .year-stat {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+        
+        select {
+            background-color: var(--input-bg);
+            border-color: var(--border-color);
+            color: var(--text-color);
+        }
+        
+        .modal-content {
+            background-color: var(--modal-bg);
+            color: var(--text-color);
+        }
+        
+        .modal-header {
+            border-bottom-color: var(--border-color);
+        }
+        
+        .modal-body code {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+        }
+        
+        /* Dark mode toggle button */
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #25D366;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .theme-toggle:hover {
+            background: #128C7E;
+            transform: scale(1.1);
+        }
+        
+        /* Chart grid lines dark mode */
+        [data-theme="dark"] .chart-canvas {
+            filter: brightness(0.9);
+        }
     </style>
 </head>
 <body>
@@ -437,6 +531,11 @@
         <div class="charts-container" id="charts-container"></div>
     </div>
     
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="theme-toggle" title="Toggle dark/light mode">
+        🌙
+    </button>
+    
     <!-- Info Icon -->
     <div class="info-icon" id="info-icon" title="How to use this tool">
         ?
@@ -506,6 +605,7 @@
         const infoIcon = document.getElementById('info-icon');
         const infoModal = document.getElementById('info-modal');
         const closeModal = document.getElementById('close-modal');
+        const themeToggle = document.getElementById('theme-toggle');
         
         // Event listeners
         contactSelect.addEventListener('change', fetchAndRenderCharts);
@@ -535,8 +635,33 @@
             }
         });
         
+        // Theme toggle functionality
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('whatsapp-analyzer-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+        }
+        
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('whatsapp-analyzer-theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+        
+        function updateThemeIcon(theme) {
+            themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+        
+        // Theme toggle event listener
+        themeToggle.addEventListener('click', toggleTheme);
+        
         // Load default chart on page load
         window.addEventListener('load', () => {
+            // Initialize theme
+            initializeTheme();
             // No default contact selection
         });
         
