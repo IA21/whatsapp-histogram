@@ -213,6 +213,152 @@
             font-size: 1.2em;
             display: none;
         }
+        
+        /* Info icon and modal styles */
+        .info-icon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #25D366;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            z-index: 1001;
+        }
+        
+        .info-icon:hover {
+            background: #128C7E;
+            transform: scale(1.1);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1002;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            position: relative;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .modal-header h2 {
+            color: #25D366;
+            margin: 0;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: auto;
+            line-height: 1;
+        }
+        
+        .close:hover,
+        .close:focus {
+            color: #25D366;
+        }
+        
+        .modal-body {
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .modal-body h3 {
+            color: #25D366;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        
+        .modal-body ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .modal-body li {
+            margin: 8px 0;
+        }
+        
+        .modal-body code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }
+        
+        .highlight {
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        
+        .step-number {
+            background: #25D366;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body>
@@ -290,6 +436,59 @@
         
         <div class="charts-container" id="charts-container"></div>
     </div>
+    
+    <!-- Info Icon -->
+    <div class="info-icon" id="info-icon" title="How to use this tool">
+        ?
+    </div>
+    
+    <!-- Info Modal -->
+    <div class="modal" id="info-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📱 How to Use WhatsApp Chat Analyzer</h2>
+                <span class="close" id="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="highlight">
+                    <strong>📋 Quick Start:</strong> Export your WhatsApp chat as a text file and place it in the chats/ directory to start analyzing your messaging patterns!
+                </div>
+                
+                <h3><span class="step-number">1</span>Export WhatsApp Chat</h3>
+                <p><strong>On Mobile:</strong></p>
+                <ul>
+                    <li>Open WhatsApp</li>
+                    <li>Go to <strong>Settings</strong> → <strong>Chats</strong> → <strong>Chat History</strong></li>
+                    <li>Tap <strong>"Export Chat"</strong></li>
+                    <li>Pick the contact/group you want to analyze</li>
+                    <li>Choose <strong>"Without Media"</strong> (we only need text messages)</li>
+                    <li>Save or share the <code>.txt</code> file</li>
+                </ul>
+                
+                <h3><span class="step-number">2</span>Place File in Directory</h3>
+                <ul>
+                    <li>Copy the exported <code>.txt</code> file to the <code>chats/</code> directory</li>
+                    <li>The file can have any name (e.g., <code>john_doe.txt</code>, <code>family_group.txt</code>)</li>
+                    <li>Refresh this page - your chat will appear in the dropdown</li>
+                </ul>
+                
+                <h3><span class="step-number">3</span>Analyze Your Data</h3>
+                <ul>
+                    <li><strong>Select Contact:</strong> Choose the chat file to analyze</li>
+                    <li><strong>Chart Type:</strong> Line charts show trends, bar charts show individual values</li>
+                    <li><strong>Group By:</strong> Daily for detailed patterns, Weekly/Monthly for broader trends</li>
+                </ul>
+                
+                <h3>🔧 Features</h3>
+                <ul>
+                    <li><strong>Multi-year support:</strong> Each year gets its own chart for easy comparison</li>
+                    <li><strong>Smart tooltips:</strong> Hover over data points for detailed information</li>
+                    <li><strong>Consistent scaling:</strong> All charts use the same Y-axis for accurate comparison</li>
+                    <li><strong>Privacy-focused:</strong> All processing happens locally on your server</li>
+                </ul>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Global variables
@@ -304,11 +503,37 @@
         const errorMessage = document.getElementById('error-message');
         const overallStats = document.getElementById('overall-stats');
         const noData = document.getElementById('no-data');
+        const infoIcon = document.getElementById('info-icon');
+        const infoModal = document.getElementById('info-modal');
+        const closeModal = document.getElementById('close-modal');
         
         // Event listeners
         contactSelect.addEventListener('change', fetchAndRenderCharts);
         chartTypeSelect.addEventListener('change', fetchAndRenderCharts);
         groupBySelect.addEventListener('change', fetchAndRenderCharts);
+        
+        // Info modal event listeners
+        infoIcon.addEventListener('click', () => {
+            infoModal.style.display = 'block';
+        });
+        
+        closeModal.addEventListener('click', () => {
+            infoModal.style.display = 'none';
+        });
+        
+        // Close modal when clicking outside of it
+        window.addEventListener('click', (event) => {
+            if (event.target === infoModal) {
+                infoModal.style.display = 'none';
+            }
+        });
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && infoModal.style.display === 'block') {
+                infoModal.style.display = 'none';
+            }
+        });
         
         // Load default chart on page load
         window.addEventListener('load', () => {
