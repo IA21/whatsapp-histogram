@@ -173,7 +173,9 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(255, 255, 255, 0.9);
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
             padding: 30px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
@@ -452,6 +454,17 @@
         /* Chart grid lines dark mode */
         [data-theme="dark"] .chart-canvas {
             filter: brightness(0.9);
+        }
+        
+        /* Chart axis label colors for dark mode */
+        [data-theme="dark"] {
+            --chart-text-color: #e0e0e0;
+            --chart-grid-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        [data-theme="light"] {
+            --chart-text-color: #666;
+            --chart-grid-color: rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
@@ -804,6 +817,10 @@
             const isCurrentYear = parseInt(yearData.year) === currentYear;
             const detailsKey = groupBy === 'week' ? 'weekDetails' : (groupBy === 'month' ? 'monthDetails' : null);
             
+            // Get theme-aware colors
+            const textColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-text-color') || '#666';
+            const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-grid-color') || 'rgba(0, 0, 0, 0.1)';
+            
             // Set max labels based on grouping type
             const maxLabels = groupBy === 'day' ? 12 : (groupBy === 'month' ? 12 : 26); // 12 for daily/monthly, 26 for weekly
             
@@ -842,12 +859,17 @@
                             beginAtZero: true,
                             max: yAxisMax,
                             ticks: {
-                                stepSize: Math.ceil(yAxisMax / 10)
+                                stepSize: Math.ceil(yAxisMax / 10),
+                                color: textColor
+                            },
+                            grid: {
+                                color: gridColor
                             }
                         },
                         x: {
                             ticks: {
                                 maxTicksLimit: maxLabels,
+                                color: textColor,
                                 callback: function(value, index, values) {
                                     const label = this.getLabelForValue(value);
                                     if (groupBy === 'day') {
@@ -860,6 +882,9 @@
                                     }
                                     return label; // For weekly (now monthly), show month names directly
                                 }
+                            },
+                            grid: {
+                                color: gridColor
                             }
                         }
                     },
