@@ -257,7 +257,7 @@
                 <label for="group-by-select">Group By:</label>
                 <select id="group-by-select">
                     <option value="day">Daily</option>
-                    <option value="week">Weekly</option>
+                    <option value="week" selected>Weekly</option>
                     <option value="month">Monthly</option>
                 </select>
             </div>
@@ -312,12 +312,7 @@
         
         // Load default chart on page load
         window.addEventListener('load', () => {
-            // Set default to sample.txt if available
-            const sampleOption = contactSelect.querySelector('option[value="sample.txt"]');
-            if (sampleOption) {
-                contactSelect.value = 'sample.txt';
-                fetchAndRenderCharts();
-            }
+            // No default contact selection
         });
         
         function showError(message) {
