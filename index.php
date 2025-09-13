@@ -313,7 +313,7 @@
         
         .modal-body {
             line-height: 1.6;
-            color: #333;
+            color: var(--text-color);
         }
         
         .modal-body h3 {
@@ -330,6 +330,11 @@
         
         .modal-body li {
             margin: 8px 0;
+            color: var(--text-color);
+        }
+        
+        .modal-body p {
+            color: var(--text-color);
         }
         
         .modal-body code {
@@ -366,7 +371,7 @@
         [data-theme="dark"] {
             --bg-color: #1a1a1a;
             --container-bg: #2d2d2d;
-            --text-color: #e0e0e0;
+            --text-color: #f0f0f0;
             --card-bg: #3a3a3a;
             --border-color: #555;
             --input-bg: #404040;
@@ -437,7 +442,8 @@
             color: white;
             border: none;
             cursor: pointer;
-            font-size: 18px;
+            font-size: 20px;
+            font-weight: bold;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             transition: all 0.3s;
             z-index: 1001;
@@ -458,7 +464,7 @@
         
         /* Chart axis label colors for dark mode */
         [data-theme="dark"] {
-            --chart-text-color: #e0e0e0;
+            --chart-text-color: #f0f0f0;
             --chart-grid-color: rgba(255, 255, 255, 0.2);
         }
         
